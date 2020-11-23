@@ -194,7 +194,7 @@
                             </div>
                             <div class="form-group">
                                 <label>
-                                    Synthetic Tests (ONLY public monitoring locations)
+                                    Synthetic Tests (ONLY public browser monitoring locations)
                                 </label>
                                 <input ng-disabled="isbtnRunDisabled()" name="syntheticTestsEnabled"
                                     ng-required="$scope.rulesType == null" type="radio" ng-model="rulesType"
@@ -745,6 +745,7 @@
                 function (data) {
                     if (data.status != 429) {
                         log("ERROR-----------------------------");
+                        log("Name: " + details.name)
                         log("Status: " + data.status);
                         log("Status Text: " + data.statusText);
                         log("URL: " + data.config.url);
