@@ -841,6 +841,12 @@
                 log("Response Code: " + result.status);
                 // log(JSON.stringify(result.data))
                 console.log(result.data)
+                if(result.data.customInfo !== ""){
+                    log("WARNING-----------------------------");
+                    log(result.data.customInfo);
+                    log("------------------------------------");
+                }
+                // log(JSON.stringify(result.data.script))
                 return result;
             },
                 function (data) {
@@ -1066,6 +1072,7 @@
         }
 
         function getSyntheticTestInfo(value) {
+            $('#log').empty();
             if ($scope.masterEnv.url != null && $scope.masterEnv.token != null) {
                 $scope.convertSyntheticInfo = "Getting the data from Dynatrace"
                 if (value == 'convertTohttpMonitor') {
@@ -1092,7 +1099,7 @@
                             });
                             $scope.syntheticLocation = locations.sort((a, b) => (a.name > b.name) ? 1 : -1);
                         } else {
-                            $scope.convertSyntheticInfo = "Error while getting the data. Validate the information that you enter and try again"
+                            $scope.convertSyntheticInfo = "Error while getting the data. Validate the information that you provided and try again"
                         }
                     });
                 }
@@ -1103,7 +1110,7 @@
                             $scope.listSyntheticTests = masterResult['data']['monitors'].sort((a, b) => (a.name > b.name) ? 1 : -1);
                         }
                         else {
-                            $scope.convertSyntheticInfo = "Error while getting the data. Validate the information that you enter and try again"
+                            $scope.convertSyntheticInfo = "Error while getting the data. Validate the information that you provided and try again"
                         }
                     });
                 }
@@ -1122,15 +1129,23 @@
             masterDataPromise.then(function (masterResult) {
                 if (masterResult.status == 200) {
                     if (masterResult != null) {
-                        if (masterResult['data'] != "Error") {
-                            var postDataPromise = retrieveDataService.addItem($scope.masterEnv.url, $scope.masterEnv.token, masterResult['data'], "synthetic/monitors", false, false)
-                            // log(JSON.stringify(masterResult['data']))
-                            postDataPromise.then(function (result) {
-                                if (result["entityId"] != null) {
-                                    log("Link to the new Test: <a href='" + $scope.masterEnv.url + "/#httpcheckdetails;id=" + result["entityId"] + ";gtf=l_2_HOURS;gf=all" + "' target='_blank'>link</a>");
-                                    $scope.successfulConvertHTTPMon = true;
-                                }
-                            });
+                        if (masterResult['data']['script'] != "Error") {
+                            masterResult['data']['script'].forEach(script => {
+                                var postDataPromise = retrieveDataService.addItem($scope.masterEnv.url, $scope.masterEnv.token, script['script'], "synthetic/monitors", false, false)
+                                postDataPromise.then(function (result) {
+                                    if (result["entityId"] != null) {
+                                        log("SYNTHETIC TEST CREATED---------------")
+                                        log("Link to the new DT test: <a href='" + $scope.masterEnv.url + "/#httpcheckdetails;id=" + result["entityId"] + ";gtf=l_2_HOURS;gf=all" + "' target='_blank'>" + script['script']['name'] + "</a>")
+                                        if(script['hasPMTest']){
+                                            log("WARNING-----------------------------");
+                                            log("The test <a href='" + $scope.masterEnv.url + "/#httpcheckdetails;id=" + result["entityId"] + ";gtf=l_2_HOURS;gf=all" + "' target='_blank'>" + script['script']['name'] + "</a> is using Postman Test Scripts that aren't supported by this tool.")
+                                            log("Please manually remove them from the Dynatrace synthetic test to avoid any issues.")
+                                        }
+                                        log("-------------------------------------")
+                                        $scope.successfulConvertHTTPMon = true;
+                                    }
+                                });
+                            })
                         }
                         else {
                             alert("Error: There was an error during the conversion")
@@ -1153,10 +1168,10 @@
                 masterDataPromise.then(function (masterResult) {
                     if (masterResult != null) {
                         //download the data
-                        if (masterResult['data'] != "Error") {
+                        if (masterResult['data']['script'] != "Error") {
                             var linkElement = document.createElement('a');
                             try {
-                                var blob = new Blob([JSON.stringify(masterResult['data'])], { type: 'application/octet-stream' });
+                                var blob = new Blob([JSON.stringify(masterResult['data']['script'])], { type: 'application/octet-stream' });
                                 var url = window.URL.createObjectURL(blob);
 
                                 linkElement.setAttribute('href', url);
